@@ -1,0 +1,15 @@
+<resources>
+
+    <!--
+        Base application theme for API 11+. This theme completely replaces
+        AppBaseTheme from res/values/styles.xml on API 11+ devices.
+    -->
+    <style name="AppBaseTheme" parent="@style/Theme.Sherlock">
+        <!-- API 11 theme customizations can go here. -->
+    </style>
+
+    <style name="EmptyViewProgressBar" parent="@android:style/Widget.Holo.Light.ProgressBar.Large"></style>
+
+    <style name="LocalImageGridView" parent="@android:style/Widget.Holo.Light.GridView"></style>
+
+</resources>

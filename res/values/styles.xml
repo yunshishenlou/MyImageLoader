@@ -1,0 +1,14 @@
+<resources>
+
+    <style name="AppBaseTheme" parent="android:Theme.Light"></style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme" parent="@style/Theme.Sherlock">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+    </style>
+
+    <style name="EmptyViewProgressBar" parent="@android:style/Widget.ProgressBar.Large"></style>
+
+    <style name="LocalImageGridView" parent="@android:style/Widget.GridView"></style>
+
+</resources>
