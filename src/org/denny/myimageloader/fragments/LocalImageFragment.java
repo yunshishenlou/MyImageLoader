@@ -9,14 +9,14 @@ import org.denny.myimageloader.manager.ImageEntry;
 import org.denny.myimageloader.manager.ImageLoaderFactory;
 import org.denny.myimageloader.manager.ThumbnailLoader;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,12 +26,17 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-public class LocalImageFragment extends Fragment implements LoaderCallbacks<List<ImageEntry>> {
+public class LocalImageFragment extends Fragment implements LoaderCallbacks<Cursor> {
     private ProgressBar mEmptyProgressBar = null;
     private GridView mGridView = null;
     private ImageView mBigImageView = null;
     GridViewAdapter mGridViewAdapter = null;
-    LocalImageLoader mLoader = null;
+    private Handler mUiHandler = new Handler();
+
+    private static String[] PROJECTION = new String[] {
+            MediaStore.Images.Media.DATA, MediaStore.Images.Media.DISPLAY_NAME,
+            MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE
+    };
     private List<ImageEntry> mImageEntryList = new ArrayList<ImageEntry>();
 
     private static int LOCAL_IMAGE_LOADER = 1;
@@ -41,7 +46,7 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<List
         View contentView = inflater.inflate(R.layout.local_image_fragment, null);
         mEmptyProgressBar = (ProgressBar) contentView.findViewById(R.id.empty_view_pogress_bar);
         mGridView = (GridView) contentView.findViewById(R.id.local_image_gird_view);
-        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList, mUiHandler);
         mGridView.setAdapter(mGridViewAdapter);
         mBigImageView = (ImageView) contentView.findViewById(R.id.big_image_image_view);
         return contentView;
@@ -56,10 +61,18 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<List
     private static class GridViewAdapter extends BaseAdapter {
         private List<ImageEntry> mImageList = null;
         private Context mContext = null;
+        private Handler mUiHandler = null;
+        private static int IMAGE_VIEW_MAX_WIDTH;
+        private static int IMAGE_VIEW_MAX_HEIGHT;
 
-        public GridViewAdapter(Context context, List<ImageEntry> imageList) {
+        public GridViewAdapter(Context context, List<ImageEntry> imageList, Handler uiHandler) {
             this.mImageList = imageList;
             this.mContext = context;
+            this.mUiHandler = uiHandler;
+            IMAGE_VIEW_MAX_WIDTH = (int) mContext.getResources().getDimension(
+                    R.dimen.grid_image_view_max_width);
+            IMAGE_VIEW_MAX_HEIGHT = (int) mContext.getResources().getDimension(
+                    R.dimen.grid_image_view_max_height);
         }
 
         @Override
@@ -80,80 +93,69 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<List
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
-                convertView = new ImageView(mContext);
+
+                ImageView imageView = new ImageView(mContext);
+                setImageViewAttrs(imageView);
+                convertView = imageView;
             }
-            ImageEntry imageEntry = mImageList.get(position);
-            ImageLoaderFactory.getImageLoader(ThumbnailLoader.class, mContext).loadLocalImage(
-                    imageEntry, (ImageView) convertView);
+            ImageEntry imageEntry = (ImageEntry) getItem(position);
+            ImageLoaderFactory.getImageLoader(ThumbnailLoader.class, mContext, mUiHandler)
+                    .loadLocalImage(imageEntry, (ImageView) convertView);
             return convertView;
         }
 
+        private void setImageViewAttrs(ImageView imageView) {
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageView.setAdjustViewBounds(true);
+            imageView.setMaxWidth(IMAGE_VIEW_MAX_WIDTH);
+            imageView.setMaxHeight(IMAGE_VIEW_MAX_HEIGHT);
+        }
+
+        private void setImageEntryBounds(ImageEntry imageEntry) {
+            imageEntry.setReqHeight(IMAGE_VIEW_MAX_HEIGHT);
+            imageEntry.setReqWidth(IMAGE_VIEW_MAX_WIDTH);
+        }
     }
 
     @Override
-    public Loader<List<ImageEntry>> onCreateLoader(int arg0, Bundle arg1) {
-        mLoader = new LocalImageLoader(getActivity());
-        mLoader.forceLoad();
-        return mLoader;
+    public Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
+        return new CursorLoader(getActivity(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                PROJECTION, null, null, null);
     }
 
     @Override
-    public void onLoadFinished(Loader<List<ImageEntry>> loader, List<ImageEntry> imageEntryList) {
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         mEmptyProgressBar.setVisibility(View.INVISIBLE);
-        mImageEntryList.addAll(imageEntryList);
+        mImageEntryList.addAll(getImageEntryList(cursor));
         mGridViewAdapter.notifyDataSetChanged();
         mGridView.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public void onLoaderReset(Loader<List<ImageEntry>> loader) {
-        // TODO Auto-generated method stub
+    private List<ImageEntry> getImageEntryList(Cursor cursor) {
+        List<ImageEntry> imageEntryList = null;
+        if (cursor != null) {
+            imageEntryList = new ArrayList<ImageEntry>();
+            while (cursor.moveToNext()) {
+                ImageEntry imageEntry = new ImageEntry();
+                imageEntry.setPath(cursor.getString(cursor
+                        .getColumnIndex(MediaStore.Images.Media.DATA)));
+                imageEntry.setName(cursor.getString(cursor
+                        .getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
+                imageEntry.setId(cursor.getString(cursor
+                        .getColumnIndex(MediaStore.Images.Media._ID)));
+                imageEntry.setSize(cursor.getLong(cursor
+                        .getColumnIndex(MediaStore.Images.Media.SIZE)));
 
-    }
-
-    private static class LocalImageLoader extends AsyncTaskLoader<List<ImageEntry>> {
-        private final Context mContext;
-        private static String[] PROJECTION = new String[] {
-                MediaStore.Images.Media.DATA, MediaStore.Images.Media.DISPLAY_NAME,
-                MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE
-        };
-
-        public LocalImageLoader(Context context) {
-            super(context);
-            this.mContext = context;
-        }
-
-        @Override
-        public List<ImageEntry> loadInBackground() {
-            List<ImageEntry> imageEntryList = null;
-            ContentResolver contentResolver = mContext.getContentResolver();
-            Cursor cursor = null;
-            try {
-                cursor = contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        PROJECTION, null, null, null);
-                if (cursor != null) {
-                    imageEntryList = new ArrayList<ImageEntry>();
-                    while (cursor.moveToNext()) {
-                        ImageEntry imageEntry = new ImageEntry();
-                        imageEntry.setPath(cursor.getString(cursor
-                                .getColumnIndex(MediaStore.Images.Media.DATA)));
-                        imageEntry.setName(cursor.getString(cursor
-                                .getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME)));
-                        imageEntry.setId(cursor.getString(cursor
-                                .getColumnIndex(MediaStore.Images.Media._ID)));
-                        imageEntry.setSize(cursor.getLong(cursor
-                                .getColumnIndex(MediaStore.Images.Media.SIZE)));
-
-                        imageEntryList.add(imageEntry);
-                    }
-                }
-                return imageEntryList;
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
+                imageEntryList.add(imageEntry);
             }
         }
+        return imageEntryList;
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        // TODO Auto-generated method stub
+
     }
 
 }

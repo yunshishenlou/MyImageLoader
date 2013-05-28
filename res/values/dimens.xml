@@ -5,5 +5,7 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="grid_view_h_spaceing">10dp</dimen>
     <dimen name="grid_view_v_spaceing">10dp</dimen>
+    <dimen name="grid_image_view_max_width">70dp</dimen>
+    <dimen name="grid_image_view_max_height">70dp</dimen>
 
 </resources>

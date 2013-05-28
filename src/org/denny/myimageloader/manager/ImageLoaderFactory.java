@@ -5,16 +5,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import android.content.Context;
+import android.os.Handler;
 
 public class ImageLoaderFactory {
     private static AbsImageLoader mImageLoader = null;
 
-    public static AbsImageLoader getImageLoader(Class clss, Context context) {
+    public static AbsImageLoader getImageLoader(Class clss, Context context,Handler uiHandler) {
         synchronized (ImageLoaderFactory.class) {
             try {
                 if (mImageLoader == null || !(clss.isInstance(mImageLoader))) {
-                    Constructor constructor = clss.getConstructor(Context.class);
-                    mImageLoader = (AbsImageLoader) constructor.newInstance(context);
+                    Constructor constructor = clss.getConstructor(Context.class,Handler.class);
+                    mImageLoader = (AbsImageLoader) constructor.newInstance(context,uiHandler);
                 }
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();

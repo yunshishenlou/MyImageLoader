@@ -7,6 +7,21 @@ public class ImageEntry {
     private int width;
     private int height;
     private long size;
+    
+    private int reqWidth;
+    public int getReqWidth() {
+        return reqWidth;
+    }
+    public void setReqWidth(int reqWidth) {
+        this.reqWidth = reqWidth;
+    }
+    private int reqHeight;
+    public int getReqHeight() {
+        return reqHeight;
+    }
+    public void setReqHeight(int reqHeight) {
+        this.reqHeight = reqHeight;
+    }
     public String getName() {
         return name;
     }
