@@ -18,9 +18,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.AbsListView;
+import android.widget.AbsListView.LayoutParams;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -33,6 +37,9 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
     GridViewAdapter mGridViewAdapter = null;
     private Handler mUiHandler = new Handler();
 
+    private int mGridThumbnailWidth;
+    private int mGridThumbnailSpaceing;
+
     private static String[] PROJECTION = new String[] {
             MediaStore.Images.Media.DATA, MediaStore.Images.Media.DISPLAY_NAME,
             MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE
@@ -42,6 +49,13 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
     private static int LOCAL_IMAGE_LOADER = 1;
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mGridThumbnailWidth = getResources().getDimensionPixelSize(R.dimen.grid_view_width);
+        mGridThumbnailSpaceing = getResources().getDimensionPixelSize(R.dimen.grid_view_spaceing);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View contentView = inflater.inflate(R.layout.local_image_fragment, null);
         mEmptyProgressBar = (ProgressBar) contentView.findViewById(R.id.empty_view_pogress_bar);
@@ -49,6 +63,7 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
         mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList, mUiHandler);
         mGridView.setAdapter(mGridViewAdapter);
         mBigImageView = (ImageView) contentView.findViewById(R.id.big_image_image_view);
+        setGridViewLayoutListener();
         return contentView;
     }
 
@@ -58,21 +73,39 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
         getActivity().getSupportLoaderManager().initLoader(LOCAL_IMAGE_LOADER, null, this);
     }
 
+    private void setGridViewLayoutListener() {
+        mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        if (mGridViewAdapter.getNumColumns() == 0) {
+                            final int numColumns = (int) Math.floor(mGridView.getWidth()
+                                    / (mGridThumbnailWidth + mGridThumbnailSpaceing));
+                            if (numColumns > 0) {
+                                final int columnWidth = (mGridView.getWidth() / numColumns)
+                                        - mGridThumbnailSpaceing;
+                                mGridViewAdapter.setNumColumns(numColumns);
+                                mGridViewAdapter
+                                        .setImageViewLayoutParas(new AbsListView.LayoutParams(
+                                                ViewGroup.LayoutParams.MATCH_PARENT, columnWidth));
+                            }
+                        }
+                    }
+                });
+    }
+
     private static class GridViewAdapter extends BaseAdapter {
         private List<ImageEntry> mImageList = null;
         private Context mContext = null;
         private Handler mUiHandler = null;
-        private static int IMAGE_VIEW_MAX_WIDTH;
-        private static int IMAGE_VIEW_MAX_HEIGHT;
+        private int mNumColumns;
+        private int mItemHeight;
+        private AbsListView.LayoutParams mImageViewLayoutParas = null;
 
         public GridViewAdapter(Context context, List<ImageEntry> imageList, Handler uiHandler) {
             this.mImageList = imageList;
             this.mContext = context;
             this.mUiHandler = uiHandler;
-            IMAGE_VIEW_MAX_WIDTH = (int) mContext.getResources().getDimension(
-                    R.dimen.grid_image_view_max_width);
-            IMAGE_VIEW_MAX_HEIGHT = (int) mContext.getResources().getDimension(
-                    R.dimen.grid_image_view_max_height);
         }
 
         @Override
@@ -105,16 +138,24 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
         }
 
         private void setImageViewAttrs(ImageView imageView) {
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setAdjustViewBounds(true);
-            imageView.setMaxWidth(IMAGE_VIEW_MAX_WIDTH);
-            imageView.setMaxHeight(IMAGE_VIEW_MAX_HEIGHT);
+            imageView.setLayoutParams(mImageViewLayoutParas);
         }
 
-        private void setImageEntryBounds(ImageEntry imageEntry) {
-            imageEntry.setReqHeight(IMAGE_VIEW_MAX_HEIGHT);
-            imageEntry.setReqWidth(IMAGE_VIEW_MAX_WIDTH);
+        public void setImageViewLayoutParas(AbsListView.LayoutParams paras) {
+            mImageViewLayoutParas = paras;
+            notifyDataSetChanged();
         }
+
+        public int getNumColumns() {
+            return mNumColumns;
+        }
+
+        public void setNumColumns(int mNumColumns) {
+            this.mNumColumns = mNumColumns;
+        }
+
     }
 
     @Override

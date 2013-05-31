@@ -1,6 +1,8 @@
 
 package org.denny.myimageloader.manager;
 
+import org.denny.myimageloader.R;
+import org.denny.myimageloader.util.AsyncTask;
 
 import android.content.Context;
 import android.os.Handler;
@@ -14,7 +16,12 @@ public class ThumbnailLoader extends AbsImageLoader {
 
     @Override
     public void loadLocalImage(final ImageEntry imageEntry, final ImageView imv) {
-        ImageLoaderWorker worker = new ImageLoaderWorker(imv);
-        worker.execute(imageEntry);
+        if (BitmapWorkerTask.cancelPotentialWork(imageEntry, imv)) {
+            final BitmapWorkerTask task = new BitmapWorkerTask(imv, imageEntry);
+            final AsyncDrawable asyncDrawable = new AsyncDrawable(mContext.getResources(),
+                    getPlaceHolderBitmap(R.drawable.empty_photo), task);
+            imv.setImageDrawable(asyncDrawable);
+            task.executeOnExecutor(AsyncTask.DUAL_THREAD_EXECUTOR, imageEntry);
+        }
     }
 }

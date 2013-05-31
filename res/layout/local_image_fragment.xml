@@ -16,9 +16,11 @@
         style="@style/LocalImageGridView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:horizontalSpacing="5dp"
-        android:verticalSpacing="5dp"
-        android:numColumns="@integer/grid_view_column" />
+        android:horizontalSpacing="@dimen/grid_view_spaceing"
+        android:verticalSpacing="@dimen/grid_view_spaceing"
+        android:columnWidth="@dimen/grid_view_width"
+        android:numColumns="auto_fit"
+        />
 
     <ImageView
         android:id="@+id/big_image_image_view"
