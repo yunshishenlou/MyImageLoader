@@ -1,6 +1,9 @@
 
 package org.denny.myimageloader.fragments;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,20 +33,26 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-public class LocalImageFragment extends Fragment implements LoaderCallbacks<Cursor> {
+public class LocalImageFragment extends BaseImageFragment implements LoaderCallbacks<Cursor> {
     private ProgressBar mEmptyProgressBar = null;
+
     private GridView mGridView = null;
+
     private ImageView mBigImageView = null;
+
     GridViewAdapter mGridViewAdapter = null;
+
     private Handler mUiHandler = new Handler();
 
     private int mGridThumbnailWidth;
+
     private int mGridThumbnailSpaceing;
 
     private static String[] PROJECTION = new String[] {
             MediaStore.Images.Media.DATA, MediaStore.Images.Media.DISPLAY_NAME,
             MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE
     };
+
     private List<ImageEntry> mImageEntryList = new ArrayList<ImageEntry>();
 
     private static int LOCAL_IMAGE_LOADER = 1;
@@ -58,11 +67,11 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View contentView = inflater.inflate(R.layout.local_image_fragment, null);
-        mEmptyProgressBar = (ProgressBar) contentView.findViewById(R.id.empty_view_pogress_bar);
-        mGridView = (GridView) contentView.findViewById(R.id.local_image_gird_view);
-        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList, mUiHandler);
+        mEmptyProgressBar = (ProgressBar)contentView.findViewById(R.id.empty_view_pogress_bar);
+        mGridView = (GridView)contentView.findViewById(R.id.local_image_gird_view);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList, mDisplayOptions);
         mGridView.setAdapter(mGridViewAdapter);
-        mBigImageView = (ImageView) contentView.findViewById(R.id.big_image_image_view);
+        mBigImageView = (ImageView)contentView.findViewById(R.id.big_image_image_view);
         setGridViewLayoutListener();
         return contentView;
     }
@@ -79,7 +88,7 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
                     @Override
                     public void onGlobalLayout() {
                         if (mGridViewAdapter.getNumColumns() == 0) {
-                            final int numColumns = (int) Math.floor(mGridView.getWidth()
+                            final int numColumns = (int)Math.floor(mGridView.getWidth()
                                     / (mGridThumbnailWidth + mGridThumbnailSpaceing));
                             if (numColumns > 0) {
                                 final int columnWidth = (mGridView.getWidth() / numColumns)
@@ -96,16 +105,22 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
 
     private static class GridViewAdapter extends BaseAdapter {
         private List<ImageEntry> mImageList = null;
+
         private Context mContext = null;
-        private Handler mUiHandler = null;
+
+        
+        private DisplayImageOptions mDisplayOptions = null;
+
         private int mNumColumns;
+
         private int mItemHeight;
+
         private AbsListView.LayoutParams mImageViewLayoutParas = null;
 
-        public GridViewAdapter(Context context, List<ImageEntry> imageList, Handler uiHandler) {
+        public GridViewAdapter(Context context, List<ImageEntry> imageList, DisplayImageOptions displayOptions) {
             this.mImageList = imageList;
             this.mContext = context;
-            this.mUiHandler = uiHandler;
+            this.mDisplayOptions = displayOptions;
         }
 
         @Override
@@ -131,9 +146,12 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
                 setImageViewAttrs(imageView);
                 convertView = imageView;
             }
-            ImageEntry imageEntry = (ImageEntry) getItem(position);
-            ImageLoaderFactory.getImageLoader(ThumbnailLoader.class, mContext, mUiHandler)
-                    .loadLocalImage(imageEntry, (ImageView) convertView);
+            ImageEntry imageEntry = (ImageEntry)getItem(position);
+            // ImageLoaderFactory.getImageLoader(ThumbnailLoader.class,
+            // mContext, mUiHandler)
+            // .loadLocalImage(imageEntry, (ImageView) convertView);
+            ImageLoader.getInstance().displayImage("file://" + imageEntry.getPath(),
+                    (ImageView)convertView, mDisplayOptions);
             return convertView;
         }
 
