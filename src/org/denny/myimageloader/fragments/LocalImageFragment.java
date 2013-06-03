@@ -11,6 +11,7 @@ import org.denny.myimageloader.R;
 import org.denny.myimageloader.manager.ImageEntry;
 import org.denny.myimageloader.manager.ImageLoaderFactory;
 import org.denny.myimageloader.manager.ThumbnailLoader;
+import org.denny.myimageloader.util.Constants;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -18,6 +19,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -28,12 +30,14 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
 import android.widget.AbsListView.LayoutParams;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-public class LocalImageFragment extends BaseImageFragment implements LoaderCallbacks<Cursor> {
+public class LocalImageFragment extends Fragment implements LoaderCallbacks<Cursor> {
     private ProgressBar mEmptyProgressBar = null;
 
     private GridView mGridView = null;
@@ -53,7 +57,7 @@ public class LocalImageFragment extends BaseImageFragment implements LoaderCallb
             MediaStore.Images.Media._ID, MediaStore.Images.Media.SIZE
     };
 
-    private List<ImageEntry> mImageEntryList = new ArrayList<ImageEntry>();
+    private ArrayList<ImageEntry> mImageEntryList = new ArrayList<ImageEntry>();
 
     private static int LOCAL_IMAGE_LOADER = 1;
 
@@ -67,13 +71,35 @@ public class LocalImageFragment extends BaseImageFragment implements LoaderCallb
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View contentView = inflater.inflate(R.layout.local_image_fragment, null);
-        mEmptyProgressBar = (ProgressBar)contentView.findViewById(R.id.empty_view_pogress_bar);
-        mGridView = (GridView)contentView.findViewById(R.id.local_image_gird_view);
-        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList, mDisplayOptions);
+        mEmptyProgressBar = (ProgressBar) contentView.findViewById(R.id.empty_view_pogress_bar);
+        mGridView = (GridView) contentView.findViewById(R.id.local_image_gird_view);
+        mGridViewAdapter = new GridViewAdapter(getActivity(), mImageEntryList);
         mGridView.setAdapter(mGridViewAdapter);
-        mBigImageView = (ImageView)contentView.findViewById(R.id.big_image_image_view);
+        mBigImageView = (ImageView) contentView.findViewById(R.id.big_image_image_view);
         setGridViewLayoutListener();
+        setGridViewItemClickListener();
         return contentView;
+    }
+
+    private void setGridViewItemClickListener() {
+        mGridView.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+                startDetailFragment(position);
+
+            }
+        });
+    }
+
+    private void startDetailFragment(int position) {
+        String tag = "detailFragment";
+        FragmentManager fm = getActivity().getSupportFragmentManager();
+        DetailFragment detailFragment = new DetailFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(Constants.Extras.VIEW_PAGER_POSITION, position);
+        bundle.putParcelableArrayList(Constants.Extras.IMAGE_ENTRY_LIST, mImageEntryList);
+        detailFragment.setArguments(bundle);
+        fm.beginTransaction().add(android.R.id.content,detailFragment,tag).addToBackStack(null).commit();
     }
 
     @Override
@@ -88,7 +114,7 @@ public class LocalImageFragment extends BaseImageFragment implements LoaderCallb
                     @Override
                     public void onGlobalLayout() {
                         if (mGridViewAdapter.getNumColumns() == 0) {
-                            final int numColumns = (int)Math.floor(mGridView.getWidth()
+                            final int numColumns = (int) Math.floor(mGridView.getWidth()
                                     / (mGridThumbnailWidth + mGridThumbnailSpaceing));
                             if (numColumns > 0) {
                                 final int columnWidth = (mGridView.getWidth() / numColumns)
@@ -108,19 +134,15 @@ public class LocalImageFragment extends BaseImageFragment implements LoaderCallb
 
         private Context mContext = null;
 
-        
-        private DisplayImageOptions mDisplayOptions = null;
-
         private int mNumColumns;
 
         private int mItemHeight;
 
         private AbsListView.LayoutParams mImageViewLayoutParas = null;
 
-        public GridViewAdapter(Context context, List<ImageEntry> imageList, DisplayImageOptions displayOptions) {
+        public GridViewAdapter(Context context, List<ImageEntry> imageList) {
             this.mImageList = imageList;
             this.mContext = context;
-            this.mDisplayOptions = displayOptions;
         }
 
         @Override
@@ -146,12 +168,12 @@ public class LocalImageFragment extends BaseImageFragment implements LoaderCallb
                 setImageViewAttrs(imageView);
                 convertView = imageView;
             }
-            ImageEntry imageEntry = (ImageEntry)getItem(position);
+            ImageEntry imageEntry = (ImageEntry) getItem(position);
             // ImageLoaderFactory.getImageLoader(ThumbnailLoader.class,
             // mContext, mUiHandler)
             // .loadLocalImage(imageEntry, (ImageView) convertView);
             ImageLoader.getInstance().displayImage("file://" + imageEntry.getPath(),
-                    (ImageView)convertView, mDisplayOptions);
+                    (ImageView) convertView);
             return convertView;
         }
 

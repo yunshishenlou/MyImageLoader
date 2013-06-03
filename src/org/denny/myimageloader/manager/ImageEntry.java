@@ -1,7 +1,10 @@
 
 package org.denny.myimageloader.manager;
 
-public class ImageEntry {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class ImageEntry implements Parcelable{
     private String name;
     private String path;
     private String id;
@@ -9,25 +12,7 @@ public class ImageEntry {
     private int height;
     private long size;
 
-    private int reqWidth;
-
-    public int getReqWidth() {
-        return reqWidth;
-    }
-
-    public void setReqWidth(int reqWidth) {
-        this.reqWidth = reqWidth;
-    }
-
-    private int reqHeight;
-
-    public int getReqHeight() {
-        return reqHeight;
-    }
-
-    public void setReqHeight(int reqHeight) {
-        this.reqHeight = reqHeight;
-    }
+   
 
     public String getName() {
         return name;
@@ -95,6 +80,21 @@ public class ImageEntry {
     public int hashCode() {
         // TODO this is a bad implemention
         return 1;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(height);
+        dest.writeInt(width);
+        dest.writeString(id);
+        dest.writeString(name);
+        dest.writeString(path);
+        dest.writeLong(size);
     }
 
 }
