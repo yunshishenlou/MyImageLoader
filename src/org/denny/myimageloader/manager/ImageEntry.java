@@ -4,7 +4,7 @@ package org.denny.myimageloader.manager;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class ImageEntry implements Parcelable{
+public class ImageEntry implements Parcelable {
     private String name;
     private String path;
     private String id;
@@ -12,7 +12,9 @@ public class ImageEntry implements Parcelable{
     private int height;
     private long size;
 
-   
+    public ImageEntry() {
+
+    }
 
     public String getName() {
         return name;
@@ -97,4 +99,23 @@ public class ImageEntry implements Parcelable{
         dest.writeLong(size);
     }
 
+    private ImageEntry(Parcel pl) {
+        height = pl.readInt();
+        width = pl.readInt();
+        id = pl.readString();
+        name = pl.readString();
+        path = pl.readString();
+        size = pl.readLong();
+    }
+
+    public static final Parcelable.Creator<ImageEntry> CREATOR = new Parcelable.Creator<ImageEntry>() {
+
+        public ImageEntry createFromParcel(Parcel source) {
+            return new ImageEntry(source);
+        }
+
+        public ImageEntry[] newArray(int size) {
+            return new ImageEntry[size];
+        }
+    };
 }

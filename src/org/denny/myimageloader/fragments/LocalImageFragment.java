@@ -1,41 +1,37 @@
 
 package org.denny.myimageloader.fragments;
 
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.denny.myimageloader.DetailActivity;
 import org.denny.myimageloader.R;
 import org.denny.myimageloader.manager.ImageEntry;
-import org.denny.myimageloader.manager.ImageLoaderFactory;
-import org.denny.myimageloader.manager.ThumbnailLoader;
 import org.denny.myimageloader.util.Constants;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.AbsListView;
-import android.widget.AbsListView.LayoutParams;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 public class LocalImageFragment extends Fragment implements LoaderCallbacks<Cursor> {
     private ProgressBar mEmptyProgressBar = null;
@@ -85,21 +81,18 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
         mGridView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-                startDetailFragment(position);
-
+                startDetailActivity(position);
             }
         });
     }
 
-    private void startDetailFragment(int position) {
-        String tag = "detailFragment";
-        FragmentManager fm = getActivity().getSupportFragmentManager();
-        DetailFragment detailFragment = new DetailFragment();
+    private void startDetailActivity(int position) {
         Bundle bundle = new Bundle();
         bundle.putInt(Constants.Extras.VIEW_PAGER_POSITION, position);
         bundle.putParcelableArrayList(Constants.Extras.IMAGE_ENTRY_LIST, mImageEntryList);
-        detailFragment.setArguments(bundle);
-        fm.beginTransaction().add(android.R.id.content,detailFragment,tag).addToBackStack(null).commit();
+        Intent intent = new Intent(getActivity(),DetailActivity.class);
+        intent.putExtras(bundle);
+        startActivity(intent);
     }
 
     @Override

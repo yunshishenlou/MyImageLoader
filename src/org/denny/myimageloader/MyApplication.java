@@ -20,12 +20,11 @@ public class MyApplication extends Application {
         initImageLoader(this);
     }
 
-    public void initImageLoader(Context context) {
+    private void initImageLoader(Context context) {
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
         .showStubImage(R.drawable.empty_photo)
         .cacheInMemory()
         .cacheOnDisc()
-        .bitmapConfig(Bitmap.Config.RGB_565)
         .displayer(new RoundedBitmapDisplayer(5))
         .build();
         

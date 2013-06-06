@@ -18,7 +18,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ImageView.ScaleType;
 
 public class DetailFragment extends Fragment {
     private Context mContext = null;
@@ -26,6 +25,7 @@ public class DetailFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mContext = getActivity();
         View detailView = inflater.inflate(R.layout.detail_image_fragment, null);
         mDetailViewPager = (ViewPager) detailView.findViewById(R.id.detail_view_pager);
         List<ImageEntry> imageEntryList = getArguments().getParcelableArrayList(
@@ -53,18 +53,24 @@ public class DetailFragment extends Fragment {
         @Override
         public boolean isViewFromObject(View arg0, Object arg1) {
             // TODO Auto-generated method stub
-            return false;
+            return true;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            ((ViewPager) container).removeView((View) object);
         }
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            ImageView imageView = new ImageView(mContext);
-            imageView.setScaleType(ScaleType.CENTER_CROP);
-            imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            LayoutInflater inflater = (LayoutInflater) mContext
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View detailView = inflater.inflate(R.layout.detail_image_item, null);
+            ImageView detailImageView = (ImageView) detailView.findViewById(R.id.detail_image);
             ImageLoader.getInstance().displayImage(
-                    "file://" + mImageEntryList.get(position).getPath(), imageView);
-            return imageView;
+                    "file://" + mImageEntryList.get(position).getPath(), detailImageView);
+            container.addView(detailView);
+            return detailView;
         }
 
     }
