@@ -171,7 +171,7 @@ public class LocalImageFragment extends Fragment implements LoaderCallbacks<Curs
         }
 
         private void setImageViewAttrs(ImageView imageView) {
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            imageView.setScaleType(ImageView.ScaleType.CENTER);
             imageView.setAdjustViewBounds(true);
             imageView.setLayoutParams(mImageViewLayoutParas);
         }

@@ -23,9 +23,8 @@ public class MyApplication extends Application {
     private void initImageLoader(Context context) {
         DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
         .showStubImage(R.drawable.empty_photo)
-        .cacheInMemory()
         .cacheOnDisc()
-        .displayer(new RoundedBitmapDisplayer(5))
+        .bitmapConfig(Bitmap.Config.RGB_565)
         .build();
         
         
